@@ -1,0 +1,27 @@
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
+import { getAuthUser, isOwner } from '@/lib/auth'
+
+export default function OwnerTablesPage() {
+  const router = useRouter()
+  const params = useParams()
+  
+  useEffect(() => {
+    const authUser = getAuthUser()
+    if (!authUser || !isOwner(authUser)) {
+      router.push('/login?type=owner')
+      return
+    }
+    
+    // Admin tables sayfasına yönlendir
+    router.push('/admin/tables')
+  }, [params.id, router])
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+    </div>
+  )
+}

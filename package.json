@@ -1,0 +1,25 @@
+{
+  "name": "qr-menu-waiter-system",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.47.10",
+    "autoprefixer": "^10.4.24",
+    "lucide-react": "^0.469.0",
+    "next": "^15.1.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^15.1.6",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17"
+  }
+}

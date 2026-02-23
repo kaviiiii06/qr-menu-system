@@ -1,0 +1,256 @@
+================================================================================
+NEXT.JS DEVELOPER MODE KONTROLÜ
+QR Menü & Restoran Yönetim Sistemi
+================================================================================
+
+Bu rehber, Next.js developer mode indicator'ını (sağ alttaki Next.js ikonu) 
+nasıl açıp kapatacağınızı gösterir.
+
+================================================================================
+DEVELOPER MODE NEDİR?
+================================================================================
+
+Next.js development mode'da çalışırken, ekranın sağ alt köşesinde küçük bir 
+Next.js ikonu görünür. Bu ikon:
+
+- Build durumunu gösterir (yeşil = başarılı, kırmızı = hata)
+- Hot reload durumunu gösterir
+- Sadece development mode'da görünür
+- Production build'de otomatik olarak kaybolur
+
+================================================================================
+DEVELOPER MODE INDICATOR'I KAPATMA
+================================================================================
+
+1. NEXT.CONFIG.JS DOSYASINI AÇ
+   
+   Proje kök dizininde: next.config.js
+
+2. DEVİNDİCATORS AYARINI EKLE/GÜNCELLE
+   
+   /** @type {import('next').NextConfig} */
+   const nextConfig = {
+     images: {
+       remotePatterns: [
+         {
+           protocol: 'https',
+           hostname: '**',
+         },
+       ],
+     },
+     // Production'da console.log'ları kaldır
+     compiler: {
+       removeConsole: process.env.NODE_ENV === 'production' ? {
+         exclude: ['error', 'warn']
+       } : false
+     },
+     // Developer indicator'ı TAMAMEN KAPAT
+     devIndicators: {
+       buildActivity: false,      // Build indicator'ı kapat
+       appIsrStatus: false         // ISR status indicator'ı kapat
+     },
+     // React Strict Mode
+     reactStrictMode: true
+   }
+   
+   module.exports = nextConfig
+
+3. KAYDET VE SUNUCUYU YENİDEN BAŞLAT
+   
+   Terminal'de:
+   
+   # Ctrl + C ile mevcut sunucuyu durdur
+   # Sonra yeniden başlat:
+   npm run dev
+   
+   Veya
+   
+   # Eğer production build test ediyorsanız:
+   npm run build
+   npm start
+
+4. TARAYICIYI YENİLE
+   
+   Tarayıcıda Ctrl + F5 (hard refresh)
+   Sağ alttaki Next.js ikonu artık görünmemeli
+
+================================================================================
+DEVELOPER MODE INDICATOR'I AÇMA
+================================================================================
+
+Eğer tekrar açmak isterseniz:
+
+1. NEXT.CONFIG.JS DOSYASINI AÇ
+
+2. DEVİNDİCATORS AYARINI GÜNCELLE
+   
+   devIndicators: {
+     buildActivity: true,        // Build indicator'ı AÇ
+     appIsrStatus: true,          // ISR status indicator'ı AÇ
+     buildActivityPosition: 'bottom-right'  // Konum (opsiyonel)
+   },
+   
+   Konum seçenekleri:
+   - 'bottom-right' (varsayılan)
+   - 'bottom-left'
+   - 'top-right'
+   - 'top-left'
+
+3. KAYDET VE SUNUCUYU YENİDEN BAŞLAT
+   
+   npm run dev
+
+4. TARAYICIYI YENİLE
+   
+   Ctrl + F5
+   Sağ alttaki Next.js ikonu tekrar görünmeli
+
+================================================================================
+PRODUCTION BUILD'DE DURUM
+================================================================================
+
+Production build'de (npm run build && npm start) developer indicator 
+OTOMATIK OLARAK KAPALIDIR.
+
+Yani:
+- Development: npm run dev → Indicator görünür (ayara göre)
+- Production: npm run build && npm start → Indicator asla görünmez
+
+Vercel veya VDS'de deploy ettiğinizde production build kullanılır, 
+bu yüzden indicator zaten görünmez.
+
+================================================================================
+SORUN GİDERME
+================================================================================
+
+1. HALA GÖRÜNÜYOR
+   
+   Çözüm:
+   - next.config.js'i kaydettiğinizden emin olun
+   - Development server'ı tamamen durdurun (Ctrl + C)
+   - .next klasörünü silin: rm -rf .next (veya Windows'ta: rmdir /s .next)
+   - Yeniden başlatın: npm run dev
+   - Tarayıcıda hard refresh: Ctrl + F5
+
+2. AYAR ÇALIŞMIYOR
+   
+   Kontrol:
+   - next.config.js syntax'ı doğru mu?
+   - Virgüller doğru mu?
+   - module.exports doğru mu?
+   
+   Test:
+   npm run build
+   # Hata varsa göreceksiniz
+
+3. SADECE BİR SAYFADA GÖRÜNÜYOR
+   
+   Bu normal değil. Tüm sayfalarda görünür veya hiçbirinde.
+   Cache sorunu olabilir:
+   - Tarayıcı cache'ini temizle
+   - Incognito/Private mode'da test et
+
+================================================================================
+DİĞER DEVELOPER TOOLS
+================================================================================
+
+Next.js'in başka developer tools'ları da var:
+
+1. REACT DEVTOOLS
+   
+   Browser extension olarak kurulur:
+   - Chrome: React Developer Tools
+   - Firefox: React Developer Tools
+   
+   Bu araç component tree'yi gösterir.
+
+2. NEXT.JS DEVTOOLS (Experimental)
+   
+   next.config.js'e ekle:
+   
+   experimental: {
+     devtools: true
+   }
+
+3. VERCEL TOOLBAR (Production'da)
+   
+   Vercel'de deploy ettiğinizde, preview deployment'larda 
+   otomatik toolbar görünür. Production'da görünmez.
+
+================================================================================
+ÖNERİLER
+================================================================================
+
+1. DEVELOPMENT SIRASINDA
+   
+   Developer indicator'ı AÇIK tutun:
+   - Build hatalarını hemen görürsünüz
+   - Hot reload durumunu takip edersiniz
+   - Daha iyi developer experience
+   
+   devIndicators: {
+     buildActivity: true,
+     appIsrStatus: true
+   }
+
+2. DEMO/SUNUM SIRASINDA
+   
+   Developer indicator'ı KAPATIN:
+   - Daha profesyonel görünür
+   - Dikkat dağıtmaz
+   - Müşteriye gösterirken daha iyi
+   
+   devIndicators: {
+     buildActivity: false,
+     appIsrStatus: false
+   }
+
+3. PRODUCTION'DA
+   
+   Zaten otomatik kapalı, ayar gerekmez.
+
+================================================================================
+HIZLI KOMUTLAR
+================================================================================
+
+# Developer mode indicator'ı kapatmak için:
+1. next.config.js'de devIndicators.buildActivity = false
+2. Ctrl + C (sunucuyu durdur)
+3. npm run dev (yeniden başlat)
+4. Ctrl + F5 (tarayıcıda hard refresh)
+
+# Developer mode indicator'ı açmak için:
+1. next.config.js'de devIndicators.buildActivity = true
+2. Ctrl + C (sunucuyu durdur)
+3. npm run dev (yeniden başlat)
+4. Ctrl + F5 (tarayıcıda hard refresh)
+
+# Cache temizleyerek başlatmak için:
+rm -rf .next
+npm run dev
+
+# Windows'ta:
+rmdir /s /q .next
+npm run dev
+
+================================================================================
+ÖZET
+================================================================================
+
+✅ Developer indicator kapalı: devIndicators.buildActivity = false
+✅ Developer indicator açık: devIndicators.buildActivity = true
+✅ Production'da: Otomatik kapalı
+✅ Değişiklik sonrası: Sunucuyu yeniden başlat
+
+Şu anki durumunuz:
+- next.config.js'de buildActivity: false
+- Development'ta görünmemeli
+- Production'da zaten görünmez
+
+Eğer hala görünüyorsa:
+1. Sunucuyu tamamen durdurun
+2. .next klasörünü silin
+3. npm run dev ile başlatın
+4. Tarayıcıda Ctrl + F5
+
+================================================================================

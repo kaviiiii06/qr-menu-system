@@ -1,0 +1,771 @@
+================================================================================
+VDS (VIRTUAL DEDICATED SERVER) KURULUM REHBERİ
+QR Menü & Restoran Yönetim Sistemi
+================================================================================
+
+Bu rehber, projenizi kendi VDS sunucunuza kurmak için adım adım talimatlar içerir.
+
+================================================================================
+ÖN HAZIRLIK
+================================================================================
+
+1. GEREKSINIMLER
+   - VDS sunucu (Ubuntu 20.04 veya 22.04 önerilen)
+   - Root veya sudo yetkisi
+   - Domain adı (opsiyonel ama önerilen)
+   - SSH erişimi
+   - En az 2GB RAM
+   - En az 20GB disk alanı
+
+2. SUNUCU ÖNERİLERİ
+   Türkiye'de popüler VDS sağlayıcılar:
+   - DigitalOcean (droplet)
+   - Linode
+   - Vultr
+   - Hetzner
+   - Turhost
+   - Natro
+   
+   Önerilen Paket:
+   - 2 CPU
+   - 2GB RAM
+   - 50GB SSD
+   - Ubuntu 22.04 LTS
+   - Aylık maliyet: ~$10-20
+
+================================================================================
+ADIM 1: SUNUCUYA BAĞLANMA
+================================================================================
+
+1. SSH ile Bağlan
+   
+   Windows (PowerShell veya CMD):
+   ssh root@SUNUCU_IP_ADRESI
+   
+   Mac/Linux (Terminal):
+   ssh root@SUNUCU_IP_ADRESI
+   
+   Örnek:
+   ssh root@185.123.45.67
+
+2. Şifre Gir
+   - VDS sağlayıcınızın verdiği root şifresini gir
+   - İlk girişte şifre değiştirmen istenebilir
+
+3. Bağlantı Kontrolü
+   - Başarılı bağlandıysan terminal prompt göreceksin:
+   root@server:~#
+
+================================================================================
+ADIM 2: SUNUCU GÜNCELLEME
+================================================================================
+
+1. Sistem Güncellemesi
+   
+   apt update
+   apt upgrade -y
+
+   Bu işlem 5-10 dakika sürebilir.
+
+2. Gerekli Paketleri Kur
+   
+   apt install -y curl wget git ufw
+
+3. Firewall Ayarları
+   
+   ufw allow OpenSSH
+   ufw allow 80/tcp
+   ufw allow 443/tcp
+   ufw enable
+   
+   "Command may disrupt existing ssh connections" uyarısı gelirse 'y' bas.
+
+================================================================================
+ADIM 3: NODE.JS KURULUMU
+================================================================================
+
+1. Node.js 20.x Kur (LTS)
+   
+   curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+   apt install -y nodejs
+
+2. Kurulumu Kontrol Et
+   
+   node --version
+   # v20.x.x görmeli
+   
+   npm --version
+   # 10.x.x görmeli
+
+3. PM2 Kur (Process Manager)
+   
+   npm install -g pm2
+
+================================================================================
+ADIM 4: POSTGRESQL KURULUMU (OPSİYONEL)
+================================================================================
+
+Supabase kullanıyorsan bu adımı atla. Kendi database'ini kurmak istiyorsan:
+
+1. PostgreSQL Kur
+   
+   apt install -y postgresql postgresql-contrib
+
+2. PostgreSQL Başlat
+   
+   systemctl start postgresql
+   systemctl enable postgresql
+
+3. Database Oluştur
+   
+   sudo -u postgres psql
+   
+   PostgreSQL console'da:
+   
+   CREATE DATABASE qrmenu;
+   CREATE USER qrmenu_user WITH PASSWORD 'güçlü_şifre_buraya';
+   GRANT ALL PRIVILEGES ON DATABASE qrmenu TO qrmenu_user;
+   \q
+
+NOT: Supabase kullanmanı öneriyorum, daha kolay ve güvenli.
+
+================================================================================
+ADIM 5: NGINX KURULUMU
+================================================================================
+
+1. Nginx Kur
+   
+   apt install -y nginx
+
+2. Nginx Başlat
+   
+   systemctl start nginx
+   systemctl enable nginx
+
+3. Test Et
+   - Tarayıcıda sunucu IP'sine git: http://SUNUCU_IP
+   - Nginx welcome sayfasını görmelisin
+
+================================================================================
+ADIM 6: PROJEYI SUNUCUYA YÜKLEME
+================================================================================
+
+1. Proje Klasörü Oluştur
+   
+   mkdir -p /var/www
+   cd /var/www
+
+2. GitHub'dan Klonla
+   
+   # Public repository ise:
+   git clone https://github.com/KULLANICI_ADIN/qr-menu-system.git
+   
+   # Private repository ise önce SSH key oluştur:
+   ssh-keygen -t ed25519 -C "sunucu@email.com"
+   cat ~/.ssh/id_ed25519.pub
+   # Bu key'i GitHub Settings > SSH Keys'e ekle
+   # Sonra:
+   git clone git@github.com:KULLANICI_ADIN/qr-menu-system.git
+
+3. Proje Klasörüne Gir
+   
+   cd qr-menu-system
+
+================================================================================
+ADIM 7: ENVIRONMENT VARIABLES AYARLAMA
+================================================================================
+
+1. .env.local Dosyası Oluştur
+   
+   nano .env.local
+
+2. Supabase Bilgilerini Ekle
+   
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+
+3. Kaydet ve Çık
+   - Ctrl + X
+   - Y (Yes)
+   - Enter
+
+4. Dosya İzinlerini Ayarla
+   
+   chmod 600 .env.local
+
+================================================================================
+ADIM 8: PROJE KURULUMU
+================================================================================
+
+1. Dependencies Yükle
+   
+   npm install
+   
+   Bu işlem 3-5 dakika sürebilir.
+
+2. Production Build
+   
+   npm run build
+   
+   Bu işlem 2-3 dakika sürebilir.
+   Hata alırsan:
+   - .env.local dosyasını kontrol et
+   - npm install tekrar çalıştır
+
+3. Build Kontrolü
+   
+   ls -la .next
+   # .next klasörü oluşmuş olmalı
+
+================================================================================
+ADIM 9: PM2 İLE UYGULAMAYI BAŞLATMA
+================================================================================
+
+1. PM2 Ecosystem Dosyası Oluştur
+   
+   nano ecosystem.config.js
+
+2. Aşağıdaki içeriği yapıştır:
+   
+   module.exports = {
+     apps: [{
+       name: 'qr-menu',
+       script: 'npm',
+       args: 'start',
+       cwd: '/var/www/qr-menu-system',
+       instances: 1,
+       autorestart: true,
+       watch: false,
+       max_memory_restart: '1G',
+       env: {
+         NODE_ENV: 'production',
+         PORT: 3000
+       }
+     }]
+   }
+
+3. Kaydet ve Çık (Ctrl+X, Y, Enter)
+
+4. Uygulamayı Başlat
+   
+   pm2 start ecosystem.config.js
+
+5. PM2'yi Sistem Başlangıcına Ekle
+   
+   pm2 startup
+   # Çıkan komutu kopyala ve çalıştır
+   
+   pm2 save
+
+6. Durum Kontrol
+   
+   pm2 status
+   # qr-menu online olmalı
+   
+   pm2 logs qr-menu
+   # Logları görmek için
+
+================================================================================
+ADIM 10: NGINX REVERSE PROXY AYARLAMA
+================================================================================
+
+1. Nginx Config Dosyası Oluştur
+   
+   nano /etc/nginx/sites-available/qrmenu
+
+2. Aşağıdaki içeriği yapıştır:
+   
+   server {
+       listen 80;
+       server_name DOMAIN_ADIN_VEYA_IP;
+
+       location / {
+           proxy_pass http://localhost:3000;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection 'upgrade';
+           proxy_set_header Host $host;
+           proxy_cache_bypass $http_upgrade;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+       }
+   }
+
+   NOT: DOMAIN_ADIN_VEYA_IP yerine:
+   - Domain varsa: qrmenu.com
+   - Domain yoksa: 185.123.45.67 (sunucu IP'si)
+
+3. Kaydet ve Çık (Ctrl+X, Y, Enter)
+
+4. Config'i Aktif Et
+   
+   ln -s /etc/nginx/sites-available/qrmenu /etc/nginx/sites-enabled/
+
+5. Default Config'i Kaldır
+   
+   rm /etc/nginx/sites-enabled/default
+
+6. Nginx Test Et
+   
+   nginx -t
+   # "syntax is ok" ve "test is successful" görmeli
+
+7. Nginx'i Yeniden Başlat
+   
+   systemctl restart nginx
+
+8. Test Et
+   - Tarayıcıda: http://SUNUCU_IP veya http://DOMAIN
+   - Ana sayfa açılmalı
+
+================================================================================
+ADIM 11: SSL SERTİFİKASI (HTTPS) - LET'S ENCRYPT
+================================================================================
+
+Domain adın varsa SSL kurmalısın (ÖNEMLİ!):
+
+1. Certbot Kur
+   
+   apt install -y certbot python3-certbot-nginx
+
+2. SSL Sertifikası Al
+   
+   certbot --nginx -d qrmenu.com -d www.qrmenu.com
+   
+   NOT: qrmenu.com yerine kendi domain'ini yaz
+
+3. Email Gir
+   - Email adresini gir (sertifika yenileme bildirimleri için)
+
+4. Terms of Service
+   - A (Agree) bas
+
+5. Email Sharing
+   - N (No) bas
+
+6. Redirect Seçeneği
+   - 2 seç (HTTP'yi HTTPS'e yönlendir)
+
+7. Test Et
+   - Tarayıcıda: https://qrmenu.com
+   - Kilit simgesi görmelisin
+
+8. Otomatik Yenileme Test Et
+   
+   certbot renew --dry-run
+
+================================================================================
+ADIM 12: DOMAIN DNS AYARLARI
+================================================================================
+
+Domain sağlayıcında (GoDaddy, Namecheap, vs.):
+
+1. A Record Ekle
+   
+   Type: A
+   Name: @
+   Value: SUNUCU_IP_ADRESI
+   TTL: 3600
+
+2. WWW CNAME Ekle
+   
+   Type: CNAME
+   Name: www
+   Value: qrmenu.com
+   TTL: 3600
+
+3. Propagation Bekle
+   - DNS değişiklikleri 1-24 saat sürebilir
+   - Genellikle 1-2 saat içinde aktif olur
+
+4. Test Et
+   
+   # Terminal'de:
+   nslookup qrmenu.com
+   # Sunucu IP'sini görmeli
+
+================================================================================
+ADIM 13: SUPABASE AYARLARI
+================================================================================
+
+1. Supabase Dashboard
+   - https://supabase.com/dashboard
+   - Projenizi seç
+
+2. Site URL Güncelle
+   - Authentication > URL Configuration
+   - Site URL: https://qrmenu.com
+   - Kaydet
+
+3. Redirect URLs Ekle
+   - Redirect URLs kısmına:
+   - https://qrmenu.com/**
+   - http://SUNUCU_IP/** (test için)
+   - Kaydet
+
+4. CORS Ayarları
+   - API Settings
+   - Allowed origins: https://qrmenu.com
+   - Kaydet
+
+================================================================================
+ADIM 14: GÜNCELLEME PROSEDÜRÜ
+================================================================================
+
+Kod değişikliği yaptığında:
+
+1. Sunucuya Bağlan
+   
+   ssh root@SUNUCU_IP
+
+2. Proje Klasörüne Git
+   
+   cd /var/www/qr-menu-system
+
+3. Son Kodu Çek
+   
+   git pull origin main
+
+4. Dependencies Güncelle (gerekirse)
+   
+   npm install
+
+5. Yeniden Build Et
+   
+   npm run build
+
+6. PM2'yi Yeniden Başlat
+   
+   pm2 restart qr-menu
+
+7. Logları Kontrol Et
+   
+   pm2 logs qr-menu
+
+================================================================================
+ADIM 15: BACKUP STRATEJİSİ
+================================================================================
+
+1. Otomatik Backup Script Oluştur
+   
+   nano /root/backup.sh
+
+2. Script İçeriği:
+   
+   #!/bin/bash
+   DATE=$(date +%Y%m%d_%H%M%S)
+   BACKUP_DIR="/root/backups"
+   PROJECT_DIR="/var/www/qr-menu-system"
+   
+   mkdir -p $BACKUP_DIR
+   
+   # Proje backup
+   tar -czf $BACKUP_DIR/qrmenu_$DATE.tar.gz $PROJECT_DIR
+   
+   # Eski backupları sil (30 günden eski)
+   find $BACKUP_DIR -name "qrmenu_*.tar.gz" -mtime +30 -delete
+   
+   echo "Backup completed: qrmenu_$DATE.tar.gz"
+
+3. Çalıştırılabilir Yap
+   
+   chmod +x /root/backup.sh
+
+4. Cron Job Ekle (Günlük 3:00'da)
+   
+   crontab -e
+   
+   En alta ekle:
+   0 3 * * * /root/backup.sh >> /var/log/backup.log 2>&1
+
+5. Manuel Backup
+   
+   /root/backup.sh
+
+================================================================================
+ADIM 16: MONİTORİNG VE LOGLAR
+================================================================================
+
+1. PM2 Monitoring
+   
+   pm2 monit
+   # CPU, Memory kullanımını gösterir
+   # Çıkmak için: Ctrl+C
+
+2. Uygulama Logları
+   
+   pm2 logs qr-menu
+   # Real-time loglar
+   
+   pm2 logs qr-menu --lines 100
+   # Son 100 satır
+
+3. Nginx Logları
+   
+   # Access log
+   tail -f /var/log/nginx/access.log
+   
+   # Error log
+   tail -f /var/log/nginx/error.log
+
+4. Sistem Kaynakları
+   
+   # CPU ve Memory
+   htop
+   
+   # Disk kullanımı
+   df -h
+   
+   # Disk alanı temizle
+   apt autoremove -y
+   apt clean
+
+================================================================================
+ADIM 17: GÜVENLİK SAĞLAMLAŞTIRMA
+================================================================================
+
+1. Yeni Sudo Kullanıcı Oluştur (Root yerine)
+   
+   adduser deploy
+   usermod -aG sudo deploy
+   
+   # Yeni kullanıcı ile giriş yap:
+   ssh deploy@SUNUCU_IP
+
+2. Root SSH Girişini Kapat
+   
+   sudo nano /etc/ssh/sshd_config
+   
+   Bul ve değiştir:
+   PermitRootLogin no
+   
+   Kaydet ve SSH'ı yeniden başlat:
+   sudo systemctl restart sshd
+
+3. SSH Key Authentication (Şifre yerine)
+   
+   # Local bilgisayarında:
+   ssh-keygen -t ed25519
+   ssh-copy-id deploy@SUNUCU_IP
+   
+   # Sunucuda şifre girişini kapat:
+   sudo nano /etc/ssh/sshd_config
+   PasswordAuthentication no
+   sudo systemctl restart sshd
+
+4. Fail2Ban Kur (Brute force koruması)
+   
+   sudo apt install -y fail2ban
+   sudo systemctl enable fail2ban
+   sudo systemctl start fail2ban
+
+5. Otomatik Güvenlik Güncellemeleri
+   
+   sudo apt install -y unattended-upgrades
+   sudo dpkg-reconfigure -plow unattended-upgrades
+
+================================================================================
+ADIM 18: PERFORMANS OPTİMİZASYONU
+================================================================================
+
+1. Nginx Gzip Compression
+   
+   sudo nano /etc/nginx/nginx.conf
+   
+   http bloğuna ekle:
+   
+   gzip on;
+   gzip_vary on;
+   gzip_min_length 1024;
+   gzip_types text/plain text/css text/xml text/javascript 
+              application/x-javascript application/xml+rss 
+              application/json application/javascript;
+
+2. Nginx Cache
+   
+   sudo nano /etc/nginx/sites-available/qrmenu
+   
+   server bloğuna ekle:
+   
+   location ~* \.(jpg|jpeg|png|gif|ico|css|js)$ {
+       expires 1y;
+       add_header Cache-Control "public, immutable";
+   }
+
+3. Nginx'i Yeniden Başlat
+   
+   sudo nginx -t
+   sudo systemctl restart nginx
+
+4. PM2 Cluster Mode (Çoklu CPU için)
+   
+   nano /var/www/qr-menu-system/ecosystem.config.js
+   
+   instances: 1 yerine:
+   instances: 'max'  # Tüm CPU'ları kullan
+   
+   pm2 restart qr-menu
+
+================================================================================
+ADIM 19: SORUN GİDERME
+================================================================================
+
+1. Uygulama Açılmıyor
+   
+   # PM2 durumunu kontrol et
+   pm2 status
+   
+   # Logları kontrol et
+   pm2 logs qr-menu --lines 50
+   
+   # Yeniden başlat
+   pm2 restart qr-menu
+
+2. 502 Bad Gateway
+   
+   # Uygulama çalışıyor mu?
+   pm2 status
+   
+   # Port 3000 dinleniyor mu?
+   netstat -tulpn | grep 3000
+   
+   # Nginx config test
+   sudo nginx -t
+
+3. SSL Hatası
+   
+   # Sertifika yenile
+   sudo certbot renew
+   
+   # Nginx yeniden başlat
+   sudo systemctl restart nginx
+
+4. Yüksek Memory Kullanımı
+   
+   # PM2 restart
+   pm2 restart qr-menu
+   
+   # Memory limit ayarla
+   # ecosystem.config.js'de:
+   max_memory_restart: '500M'
+
+5. Database Bağlantı Hatası
+   
+   # .env.local kontrol et
+   cat /var/www/qr-menu-system/.env.local
+   
+   # Supabase erişilebilir mi?
+   curl https://your-project.supabase.co
+
+================================================================================
+ADIM 20: PRODUCTION KONTROLÜ
+================================================================================
+
+Tüm özellikleri test et:
+
+□ Ana sayfa açılıyor (HTTPS)
+□ SSL sertifikası çalışıyor (kilit simgesi)
+□ Owner girişi çalışıyor
+□ İşletme oluşturma çalışıyor
+□ QR menü açılıyor
+□ Sipariş oluşturma çalışıyor
+□ Mutfak ekranı çalışıyor
+□ Realtime güncellemeler çalışıyor
+□ Mobil uyumlu
+□ Hızlı yükleniyor (<3 saniye)
+
+================================================================================
+YAPILANDIRMA ÖZETİ
+================================================================================
+
+Sunucu Bilgileri:
+- IP: SUNUCU_IP_ADRESI
+- Domain: qrmenu.com (varsa)
+- OS: Ubuntu 22.04
+- Node.js: v20.x
+- PM2: Process Manager
+- Nginx: Reverse Proxy
+- SSL: Let's Encrypt
+
+Proje Konumu:
+- /var/www/qr-menu-system
+
+Önemli Komutlar:
+- pm2 status              # Uygulama durumu
+- pm2 logs qr-menu        # Loglar
+- pm2 restart qr-menu     # Yeniden başlat
+- sudo systemctl restart nginx  # Nginx yeniden başlat
+- sudo certbot renew      # SSL yenile
+
+Loglar:
+- PM2: pm2 logs qr-menu
+- Nginx Access: /var/log/nginx/access.log
+- Nginx Error: /var/log/nginx/error.log
+
+Backup:
+- Konum: /root/backups/
+- Otomatik: Her gün 03:00
+- Manuel: /root/backup.sh
+
+================================================================================
+MALİYET TAHMİNİ
+================================================================================
+
+Aylık Maliyetler:
+- VDS Sunucu: $10-20
+- Domain: $10-15/yıl
+- SSL: Ücretsiz (Let's Encrypt)
+- Toplam: ~$10-20/ay
+
+Karşılaştırma:
+- Vercel: Ücretsiz (Hobby) veya $20/ay (Pro)
+- VDS: Daha fazla kontrol, daha ucuz büyük trafik için
+
+================================================================================
+DESTEK VE KAYNAKLAR
+================================================================================
+
+Ubuntu Dokümantasyon:
+- https://ubuntu.com/server/docs
+
+Nginx Dokümantasyon:
+- https://nginx.org/en/docs/
+
+PM2 Dokümantasyon:
+- https://pm2.keymetrics.io/docs/
+
+Let's Encrypt:
+- https://letsencrypt.org/docs/
+
+DigitalOcean Tutorials:
+- https://www.digitalocean.com/community/tutorials
+
+================================================================================
+SONUÇ
+================================================================================
+
+Tebrikler! Projeniz artık kendi VDS sunucunuzda çalışıyor!
+
+Site URL'niz: https://qrmenu.com (veya http://SUNUCU_IP)
+
+Avantajlar:
+✓ Tam kontrol
+✓ Özelleştirilebilir
+✓ Maliyet etkin (büyük trafik için)
+✓ Kendi kurallarınız
+
+Dezavantajlar:
+✗ Sunucu yönetimi gerekli
+✗ Güvenlik sizin sorumluluğunuzda
+✗ Scaling manuel
+
+Sonraki Adımlar:
+1. Düzenli backup al
+2. Monitoring kur
+3. Güvenlik güncellemelerini takip et
+4. Performance'ı optimize et
+
+Başarılar! 🚀
+
+================================================================================

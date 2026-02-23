@@ -1,0 +1,48 @@
+{
+  "name": "QR Menü & Garson Sistemi",
+  "short_name": "QR Menü",
+  "description": "Restoran QR menü ve garson yönetim sistemi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ea580c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "business"],
+  "shortcuts": [
+    {
+      "name": "Mutfak Ekranı",
+      "short_name": "Mutfak",
+      "description": "Mutfak sipariş ekranı",
+      "url": "/kitchen",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Garson Paneli",
+      "short_name": "Garson",
+      "description": "Garson sipariş yönetimi",
+      "url": "/waiter/orders",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Admin Paneli",
+      "short_name": "Admin",
+      "description": "Yönetim paneli",
+      "url": "/admin",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

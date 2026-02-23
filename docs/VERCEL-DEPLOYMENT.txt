@@ -1,0 +1,442 @@
+================================================================================
+VERCEL DEPLOYMENT REHBERİ
+QR Menü & Restoran Yönetim Sistemi
+================================================================================
+
+Bu rehber, projenizi Vercel'e deploy etmek için adım adım talimatlar içerir.
+
+================================================================================
+ÖN HAZIRLIK
+================================================================================
+
+1. GEREKSINIMLER
+   - GitHub hesabı
+   - Vercel hesabı (https://vercel.com)
+   - Supabase projesi (hazır ve çalışır durumda)
+   - Git kurulu (bilgisayarınızda)
+
+2. SUPABASE HAZIRLIĞI
+   - Supabase projeniz oluşturulmuş olmalı
+   - production-setup.sql çalıştırılmış olmalı
+   - RLS policies aktif olmalı
+   - Realtime aktif olmalı
+
+================================================================================
+ADIM 1: GITHUB'A PUSH
+================================================================================
+
+1. Git Repository Oluştur (henüz yoksa)
+   
+   Terminal'de proje klasöründe:
+   
+   git init
+   git add .
+   git commit -m "Production ready - Initial commit"
+
+2. GitHub'da Yeni Repository Oluştur
+   
+   - GitHub.com'a git
+   - "New repository" butonuna tıkla
+   - Repository adı: qr-menu-system (veya istediğin isim)
+   - Private veya Public seç (önerilen: Private)
+   - "Create repository" tıkla
+
+3. Local Projeyi GitHub'a Bağla
+   
+   git remote add origin https://github.com/KULLANICI_ADIN/qr-menu-system.git
+   git branch -M main
+   git push -u origin main
+
+   NOT: KULLANICI_ADIN yerine kendi GitHub kullanıcı adınızı yazın
+
+================================================================================
+ADIM 2: VERCEL'E KAYIT
+================================================================================
+
+1. Vercel'e Git
+   - https://vercel.com adresine git
+   - "Sign Up" butonuna tıkla
+   - "Continue with GitHub" seç
+   - GitHub hesabınla giriş yap
+   - Gerekli izinleri ver
+
+2. Vercel Dashboard
+   - Giriş yaptıktan sonra dashboard'a yönlendirileceksin
+   - "Add New..." butonunu gör
+   - "Project" seç
+
+================================================================================
+ADIM 3: PROJEYI IMPORT ET
+================================================================================
+
+1. Repository Seç
+   - "Import Git Repository" ekranında
+   - GitHub repository'lerini gör
+   - "qr-menu-system" repository'sini bul
+   - "Import" butonuna tıkla
+
+2. Proje Ayarları
+   
+   Framework Preset: Next.js (otomatik algılanır)
+   Root Directory: ./ (varsayılan)
+   Build Command: npm run build (varsayılan)
+   Output Directory: .next (varsayılan)
+   Install Command: npm install (varsayılan)
+
+   Bu ayarları değiştirme, varsayılan olarak bırak.
+
+================================================================================
+ADIM 4: ENVIRONMENT VARIABLES EKLE
+================================================================================
+
+ÇOK ÖNEMLİ: Deploy etmeden önce environment variables eklemen gerekiyor!
+
+1. "Environment Variables" Bölümünü Bul
+   - Import ekranında aşağı kaydır
+   - "Environment Variables" başlığını gör
+
+2. Supabase Bilgilerini Ekle
+
+   İlk Variable:
+   Name: NEXT_PUBLIC_SUPABASE_URL
+   Value: [Supabase Project URL'nizi buraya yapıştır]
+   
+   Supabase URL'yi Bulma:
+   - Supabase Dashboard'a git (https://supabase.com/dashboard)
+   - Projenizi seç
+   - Settings > API
+   - "Project URL" altındaki URL'yi kopyala
+   - Örnek: https://abcdefghijklmnop.supabase.co
+
+   İkinci Variable:
+   Name: NEXT_PUBLIC_SUPABASE_ANON_KEY
+   Value: [Supabase Anon Key'inizi buraya yapıştır]
+   
+   Supabase Anon Key'i Bulma:
+   - Aynı sayfada (Settings > API)
+   - "Project API keys" bölümünde
+   - "anon" "public" key'i kopyala
+   - Örnek: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+3. Environment'ları Kontrol Et
+   - Her iki variable'ı da eklediğinden emin ol
+   - Değerlerde boşluk veya ekstra karakter olmadığından emin ol
+   - "Add" butonuna tıkla
+
+NOT: Developer mode indicator production'da otomatik olarak kapalıdır.
+     next.config.js'deki devIndicators ayarı sadece local development içindir.
+
+================================================================================
+ADIM 5: DEPLOY ET
+================================================================================
+
+1. Deploy Başlat
+   - "Deploy" butonuna tıkla
+   - Vercel otomatik olarak:
+     * Kodu çekecek
+     * Dependencies yükleyecek
+     * Build edecek
+     * Deploy edecek
+
+2. Deploy Sürecini İzle
+   - Build loglarını göreceksin
+   - Süreç 2-5 dakika sürer
+   - Hata varsa logları oku
+
+3. Deploy Tamamlandı
+   - "Congratulations!" mesajını göreceksin
+   - Proje URL'ni göreceksin
+   - Örnek: https://qr-menu-system.vercel.app
+
+================================================================================
+ADIM 6: İLK TEST
+================================================================================
+
+1. Siteyi Aç
+   - Vercel'in verdiği URL'ye git
+   - Ana sayfa açılmalı
+
+2. Owner Girişi Test Et
+   - URL: https://your-project.vercel.app/login?type=owner
+   - Kullanıcı: baran
+   - Şifre: BARANbaba123
+   - Giriş yapabilmeli ve /owner sayfasına yönlendirilmeli
+
+3. Sorun Varsa
+   - Vercel Dashboard > Deployments > Latest
+   - "View Function Logs" tıkla
+   - Hataları oku
+   - Genellikle environment variables hatası olur
+
+================================================================================
+ADIM 7: ÖZEL DOMAIN BAĞLAMA (OPSİYONEL)
+================================================================================
+
+Kendi domain'inizi bağlamak istiyorsanız:
+
+1. Vercel Dashboard'da
+   - Projenizi seç
+   - "Settings" > "Domains"
+   - "Add" butonuna tıkla
+
+2. Domain Ekle
+   - Domain adını yaz (örnek: qrmenu.com)
+   - "Add" tıkla
+
+3. DNS Ayarları
+   Vercel size DNS kayıtları verecek. Domain sağlayıcınızda:
+   
+   A Record:
+   Type: A
+   Name: @
+   Value: 76.76.21.21
+   
+   CNAME Record:
+   Type: CNAME
+   Name: www
+   Value: cname.vercel-dns.com
+
+4. SSL Sertifikası
+   - Vercel otomatik olarak SSL sertifikası oluşturur
+   - 24 saat içinde aktif olur
+   - HTTPS otomatik çalışır
+
+================================================================================
+ADIM 8: SUPABASE CORS AYARLARI
+================================================================================
+
+Vercel domain'inizi Supabase'e ekle:
+
+1. Supabase Dashboard
+   - Authentication > URL Configuration
+   - "Site URL" kısmına Vercel URL'nizi ekle
+   - Örnek: https://qr-menu-system.vercel.app
+
+2. Redirect URLs
+   - "Redirect URLs" kısmına ekle:
+   - https://qr-menu-system.vercel.app/**
+   - Özel domain varsa onu da ekle
+
+3. Kaydet
+   - "Save" butonuna tıkla
+
+================================================================================
+ADIM 9: REALTIME KONTROLÜ
+================================================================================
+
+Supabase Realtime'ın çalıştığından emin ol:
+
+1. Supabase Dashboard
+   - Database > Replication
+   - "supabase_realtime" publication'ı gör
+
+2. Tabloları Ekle
+   SQL Editor'de çalıştır:
+   
+   ALTER PUBLICATION supabase_realtime ADD TABLE orders;
+   ALTER PUBLICATION supabase_realtime ADD TABLE service_requests;
+   ALTER PUBLICATION supabase_realtime ADD TABLE order_items;
+
+3. Test Et
+   - Mutfak ekranını aç
+   - Yeni sipariş oluştur
+   - Mutfak ekranında anında görünmeli
+
+================================================================================
+ADIM 10: PRODUCTION KONTROLÜ
+================================================================================
+
+Tüm özellikleri test et:
+
+□ Ana sayfa açılıyor
+□ Owner girişi çalışıyor (baran / BARANbaba123)
+□ İşletme oluşturma çalışıyor
+□ Yönetici ekleme çalışıyor
+□ Kategori ekleme çalışıyor
+□ Ürün ekleme çalışıyor
+□ Masa oluşturma çalışıyor
+□ QR menü açılıyor
+□ Sipariş oluşturma çalışıyor
+□ Mutfak ekranı çalışıyor
+□ Garson paneli çalışıyor
+□ Realtime güncellemeler çalışıyor
+□ Raporlar çalışıyor
+□ Audit log çalışıyor
+
+================================================================================
+GÜNCELLEME YAPMA
+================================================================================
+
+Kod değişikliği yaptığında:
+
+1. Local'de Test Et
+   npm run dev
+   # Test et
+
+2. Build Test Et
+   npm run build
+   npm start
+   # Production build'i test et
+
+3. GitHub'a Push Et
+   git add .
+   git commit -m "Açıklama"
+   git push origin main
+
+4. Otomatik Deploy
+   - Vercel otomatik olarak yeni kodu algılar
+   - Otomatik build ve deploy eder
+   - 2-3 dakika içinde yayına alır
+
+================================================================================
+VERCEL CLI (OPSİYONEL)
+================================================================================
+
+Terminal'den deploy etmek için:
+
+1. Vercel CLI Kur
+   npm install -g vercel
+
+2. Login
+   vercel login
+
+3. İlk Deploy
+   vercel
+   # Soruları cevapla
+
+4. Production Deploy
+   vercel --prod
+
+================================================================================
+SORUN GİDERME
+================================================================================
+
+1. "Module not found" Hatası
+   Çözüm:
+   - package.json'da dependency var mı kontrol et
+   - Vercel'de "Redeploy" yap
+
+2. "Environment variable not found" Hatası
+   Çözüm:
+   - Vercel Dashboard > Settings > Environment Variables
+   - NEXT_PUBLIC_SUPABASE_URL var mı kontrol et
+   - NEXT_PUBLIC_SUPABASE_ANON_KEY var mı kontrol et
+   - Redeploy yap
+
+3. "Build failed" Hatası
+   Çözüm:
+   - Build loglarını oku
+   - Local'de "npm run build" çalıştır
+   - Hatayı düzelt, push et
+
+4. "Page not found" Hatası
+   Çözüm:
+   - URL'yi kontrol et
+   - Vercel Dashboard > Deployments > Latest
+   - "Visit" butonuna tıkla
+
+5. Realtime Çalışmıyor
+   Çözüm:
+   - Supabase Realtime ayarlarını kontrol et
+   - ALTER PUBLICATION komutlarını çalıştır
+   - Browser console'da hata var mı bak
+
+================================================================================
+PERFORMANS OPTİMİZASYONU
+================================================================================
+
+1. Vercel Analytics Aktif Et
+   - Vercel Dashboard > Analytics
+   - "Enable Analytics" tıkla
+   - Ücretsiz 100K sayfa görüntüleme
+
+2. Edge Functions (Gelişmiş)
+   - Daha hızlı response için
+   - Vercel Dashboard > Settings > Functions
+   - Region seç (Europe - Frankfurt önerilen)
+
+3. Image Optimization
+   - Vercel otomatik optimize eder
+   - Next.js Image component kullan
+
+================================================================================
+GÜVENLİK
+================================================================================
+
+1. Environment Variables
+   - Asla GitHub'a push etme
+   - Sadece Vercel Dashboard'da sakla
+
+2. HTTPS
+   - Vercel otomatik HTTPS sağlar
+   - SSL sertifikası otomatik yenilenir
+
+3. DDoS Protection
+   - Vercel otomatik koruma sağlar
+
+4. Rate Limiting
+   - Gerekirse Vercel Edge Functions ile ekle
+
+================================================================================
+BACKUP STRATEJİSİ
+================================================================================
+
+1. GitHub
+   - Kod otomatik GitHub'da
+   - Her commit bir backup
+
+2. Supabase
+   - Otomatik günlük backup
+   - Dashboard > Settings > Backups
+
+3. Manuel Backup
+   - Haftada bir database export al
+   - SQL Editor > Export
+
+================================================================================
+MALİYET
+================================================================================
+
+Vercel Hobby Plan (Ücretsiz):
+- Unlimited deployments
+- 100 GB bandwidth/ay
+- Automatic HTTPS
+- Analytics (100K sayfa görüntüleme)
+- Yeterli küçük-orta projeler için
+
+Vercel Pro Plan ($20/ay):
+- 1 TB bandwidth
+- Advanced analytics
+- Team collaboration
+- Priority support
+
+================================================================================
+DESTEK
+================================================================================
+
+Vercel Destek:
+- Dokümantasyon: https://vercel.com/docs
+- Community: https://github.com/vercel/vercel/discussions
+- Twitter: @vercel
+
+Proje Destek:
+- GitHub Issues: Repository'nizde issue aç
+- Dokümantasyon: docs/ klasöründe
+
+================================================================================
+SONUÇ
+================================================================================
+
+Tebrikler! Projeniz artık Vercel'de yayında!
+
+Vercel URL'niz: https://your-project.vercel.app
+
+Sonraki Adımlar:
+1. Özel domain bağla (opsiyonel)
+2. Analytics'i takip et
+3. Kullanıcı feedback'i topla
+4. Düzenli güncellemeler yap
+
+Başarılar! 🚀
+
+================================================================================
