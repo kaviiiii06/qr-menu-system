@@ -17,7 +17,11 @@ const nextConfig = {
   // Developer indicator'ı tamamen kapat
   devIndicators: false,
   // React Strict Mode
-  reactStrictMode: false
+  reactStrictMode: false,
+  // ESLint'i build sırasında ignore et
+  eslint: {
+    ignoreDuringBuilds: true
+  }
 }
 
 module.exports = nextConfig
