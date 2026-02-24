@@ -138,6 +138,8 @@ export default function TablesPage() {
 
   const getTableUrl = (tableId) => {
     if (typeof window === 'undefined') return ''
+    if (!restaurant?.slug) return ''
+    // Ensure we don't duplicate the origin
     return `${window.location.origin}/${restaurant.slug}/${tableId}`
   }
 
@@ -153,7 +155,13 @@ export default function TablesPage() {
   }
 
   const openQRGenerator = (url) => {
-    window.open(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`, '_blank')
+    // Ensure URL is valid and doesn't have duplicates
+    if (!url || url.includes('undefined')) {
+      setToast({ message: 'Geçersiz URL!', type: 'error' })
+      return
+    }
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`
+    window.open(qrUrl, '_blank')
   }
 
   if (isLoading) {

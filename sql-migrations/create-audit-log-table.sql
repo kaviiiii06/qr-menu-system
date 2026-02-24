@@ -7,12 +7,18 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   restaurant_id UUID REFERENCES restaurants(id) ON DELETE CASCADE,
   user_id UUID REFERENCES users(id) ON DELETE SET NULL,
   user_name TEXT,
-  action TEXT NOT NULL, -- 'CREATE', 'UPDATE', 'DELETE'
-  entity_type TEXT NOT NULL, -- 'ORDER', 'ORDER_ITEM', 'TABLE', 'PRODUCT', 'CATEGORY', 'USER'
-  entity_id UUID,
-  entity_name TEXT,
-  details JSONB, -- Detaylı bilgi
+  user_role TEXT,
+  action TEXT NOT NULL, -- 'CREATE', 'UPDATE', 'DELETE', 'MOVE', 'CLOSE', 'LOGIN', 'LOGOUT'
+  table_name TEXT, -- Database table name
+  record_id UUID, -- Record ID
+  entity_type TEXT, -- Human readable type (for backward compatibility)
+  entity_id UUID, -- For backward compatibility
+  entity_name TEXT, -- Human readable name
+  old_values JSONB, -- Old values before change
+  new_values JSONB, -- New values after change
+  details TEXT, -- Human readable description
   ip_address TEXT,
+  user_agent TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -24,6 +30,10 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, enti
 
 -- RLS Politikaları
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+
+-- Önce mevcut policy'leri sil (varsa)
+DROP POLICY IF EXISTS "Enable read for audit_logs" ON audit_logs;
+DROP POLICY IF EXISTS "Enable insert for audit_logs" ON audit_logs;
 
 -- Herkes okuyabilir
 CREATE POLICY "Enable read for audit_logs"

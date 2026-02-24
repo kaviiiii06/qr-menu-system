@@ -7,6 +7,9 @@ import { hashPassword } from '@/lib/auth'
 import { LogIn, Store, UserCircle, Crown } from 'lucide-react'
 import { auditLog } from '@/lib/auditLog'
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic'
+
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
