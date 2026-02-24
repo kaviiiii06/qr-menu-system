@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getAuthUser, isManager } from '@/lib/auth'
+import { auditLog } from '@/lib/auditLog'
 import { ArrowLeft, Plus, Edit2, Trash2, Loader2, Save, X } from 'lucide-react'
 import Link from 'next/link'
 import Toast from '@/components/Toast'
@@ -99,13 +100,23 @@ export default function CategoriesPage() {
     if (!formData.name.trim()) return
 
     try {
-      const { error } = await supabase.from('categories').insert({
+      const user = getAuthUser()
+      
+      const { data, error } = await supabase.from('categories').insert({
         restaurant_id: restaurant.id,
         name: formData.name,
         sort_order: formData.sort_order || categories.length,
-      })
+      }).select().single()
 
       if (error) throw error
+
+      // Audit log
+      if (user && data) {
+        auditLog.categoryCreated(user, restaurant.id, data.id, {
+          name: data.name,
+          sort_order: data.sort_order
+        })
+      }
 
       setToast({ message: 'Kategori eklendi!', type: 'success' })
       setFormData({ name: '', sort_order: 0 })
@@ -118,6 +129,9 @@ export default function CategoriesPage() {
 
   const handleUpdate = async (id) => {
     try {
+      const user = getAuthUser()
+      const oldCategory = categories.find(cat => cat.id === id)
+      
       const { error } = await supabase
         .from('categories')
         .update({
@@ -127,6 +141,14 @@ export default function CategoriesPage() {
         .eq('id', id)
 
       if (error) throw error
+
+      // Audit log
+      if (user && oldCategory) {
+        auditLog.categoryUpdated(user, restaurant.id, id, 
+          { name: oldCategory.name, sort_order: oldCategory.sort_order },
+          { name: formData.name, sort_order: formData.sort_order }
+        )
+      }
 
       // State'i güncelle
       setCategories(
@@ -148,9 +170,20 @@ export default function CategoriesPage() {
     if (!confirm('Bu kategoriyi silmek istediğinizden emin misiniz?')) return
 
     try {
+      const user = getAuthUser()
+      const category = categories.find(cat => cat.id === id)
+      
       const { error } = await supabase.from('categories').delete().eq('id', id)
 
       if (error) throw error
+
+      // Audit log
+      if (user && category) {
+        auditLog.categoryDeleted(user, restaurant.id, id, {
+          name: category.name,
+          sort_order: category.sort_order
+        })
+      }
 
       setToast({ message: 'Kategori silindi!', type: 'success' })
       fetchData(restaurant.id)
