@@ -9,6 +9,9 @@ export const metadata = {
     statusBarStyle: 'default',
     title: 'QR Menü',
   },
+  verification: {
+    google: '46KkWPa71hTOq9ZlYw1kfiiVXZ5rV5kajZiQrSzjq8w',
+  },
 }
 
 export const viewport = {
