@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getAuthUser, isOwner, hashPassword } from '@/lib/auth'
-import { ArrowLeft, Plus, Edit2, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, Edit2, Trash2, Eye, EyeOff } from 'lucide-react'
 
 export default function UsersManagePage() {
   const router = useRouter()
@@ -15,6 +15,7 @@ export default function UsersManagePage() {
   const [users, setUsers] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
+  const [showPasswords, setShowPasswords] = useState({})
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -59,13 +60,17 @@ export default function UsersManagePage() {
     const userData = {
       ...formData,
       restaurant_id: restaurantId,
-      password_hash: formData.password ? hashPassword(formData.password) : undefined
+      password_hash: formData.password ? hashPassword(formData.password) : undefined,
+      password: formData.password || undefined // Düz metin şifre
     }
 
     delete userData.password
 
     if (editingUser) {
-      if (!formData.password) delete userData.password_hash
+      if (!formData.password) {
+        delete userData.password_hash
+        delete userData.password
+      }
       
       const { error } = await supabase
         .from('users')
@@ -138,6 +143,13 @@ export default function UsersManagePage() {
     setEditingUser(null)
   }
 
+  const togglePasswordVisibility = (userId) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [userId]: !prev[userId]
+    }))
+  }
+
   if (!restaurant) return null
 
   const getRoleName = (role) => {
@@ -186,6 +198,7 @@ export default function UsersManagePage() {
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kullanıcı Adı</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Şifre</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ad Soyad</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
@@ -196,6 +209,24 @@ export default function UsersManagePage() {
               {users.map(u => (
                 <tr key={u.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 font-medium text-gray-900">{u.username}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm">
+                        {showPasswords[u.id] ? (u.password || '••••••••') : '••••••••'}
+                      </span>
+                      <button
+                        onClick={() => togglePasswordVisibility(u.id)}
+                        className="p-1 hover:bg-gray-200 rounded"
+                        title={showPasswords[u.id] ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                      >
+                        {showPasswords[u.id] ? (
+                          <EyeOff className="w-4 h-4 text-gray-600" />
+                        ) : (
+                          <Eye className="w-4 h-4 text-gray-600" />
+                        )}
+                      </button>
+                    </div>
+                  </td>
                   <td className="px-6 py-4 text-gray-600">{u.full_name}</td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(u.role)}`}>

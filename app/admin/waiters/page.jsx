@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getAuthUser, isManager, hashPassword } from '@/lib/auth'
-import { Plus, Edit2, Trash2, UserCheck, UserX, ArrowLeft } from 'lucide-react'
+import { Plus, Edit2, Trash2, UserCheck, UserX, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 import Toast from '@/components/Toast'
 
@@ -15,6 +15,7 @@ export default function AdminWaitersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingWaiter, setEditingWaiter] = useState(null)
   const [toast, setToast] = useState(null)
+  const [showPasswords, setShowPasswords] = useState({})
   const [formData, setFormData] = useState({
     full_name: '',
     username: '',
@@ -111,6 +112,7 @@ export default function AdminWaitersPage() {
         // Eğer şifre değiştiriliyorsa
         if (formData.password) {
           updateData.password_hash = hashPassword(formData.password)
+          updateData.password = formData.password // Düz metin şifre
         }
 
         const { error } = await supabase
@@ -128,6 +130,7 @@ export default function AdminWaitersPage() {
             full_name: formData.full_name,
             username: formData.username,
             password_hash: hashPassword(formData.password),
+            password: formData.password, // Düz metin şifre
             role: 'WAITER',
             restaurant_id: restaurant.id,
             is_active: formData.is_active,
@@ -175,6 +178,13 @@ export default function AdminWaitersPage() {
     } catch (error) {
       setToast({ message: 'Hata oluştu!', type: 'error' })
     }
+  }
+
+  const togglePasswordVisibility = (waiterId) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [waiterId]: !prev[waiterId]
+    }))
   }
 
   const openModal = (waiter = null) => {
@@ -250,6 +260,9 @@ export default function AdminWaitersPage() {
                   Kullanıcı Adı
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Şifre
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Durum
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
@@ -262,6 +275,24 @@ export default function AdminWaitersPage() {
                 <tr key={waiter.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 font-medium text-gray-900">{waiter.full_name}</td>
                   <td className="px-6 py-4 text-gray-600 font-mono">{waiter.username}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm">
+                        {showPasswords[waiter.id] ? (waiter.password || '••••••••') : '••••••••'}
+                      </span>
+                      <button
+                        onClick={() => togglePasswordVisibility(waiter.id)}
+                        className="p-1 hover:bg-gray-200 rounded"
+                        title={showPasswords[waiter.id] ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                      >
+                        {showPasswords[waiter.id] ? (
+                          <EyeOff className="w-4 h-4 text-gray-600" />
+                        ) : (
+                          <Eye className="w-4 h-4 text-gray-600" />
+                        )}
+                      </button>
+                    </div>
+                  </td>
                   <td className="px-6 py-4">
                     <button
                       onClick={() => toggleActive(waiter)}

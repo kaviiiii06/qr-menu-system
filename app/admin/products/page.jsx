@@ -1,16 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getAuthUser, isManager } from '@/lib/auth'
-import { ArrowLeft, Plus, Edit2, Trash2, Loader2, Save, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, Plus, Edit2, Trash2, Loader2, Save, Image as ImageIcon, Upload, X } from 'lucide-react'
 import Link from 'next/link'
 import Toast from '@/components/Toast'
 import { formatPrice } from '@/lib/utils'
+import { uploadImage, deleteImage } from '@/lib/imageUpload'
 
 // ProductForm component'ini dışarı çıkarıyoruz
-function ProductForm({ formData, setFormData, categories, onSave, onCancel, isEdit = false }) {
+function ProductForm({ formData, setFormData, categories, onSave, onCancel, isEdit = false, onImageUpload, isUploading }) {
+  const fileInputRef = React.useRef(null)
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      onImageUpload(file)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -52,26 +62,60 @@ function ProductForm({ formData, setFormData, categories, onSave, onCancel, isEd
         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
       />
 
-      <input
-        type="url"
-        value={formData.image_url}
-        onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-        placeholder="Fotoğraf URL (opsiyonel)"
-        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-      />
-
-      {formData.image_url && (
-        <div className="w-32 h-32 rounded-xl overflow-hidden border-2 border-gray-200">
-          <img
-            src={formData.image_url}
-            alt="Önizleme"
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.target.style.display = 'none'
-            }}
-          />
-        </div>
-      )}
+      {/* Resim Yükleme Bölümü */}
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">Ürün Resmi</label>
+        
+        {formData.image_url ? (
+          <div className="relative w-full h-48 rounded-xl overflow-hidden border-2 border-gray-200">
+            <img
+              src={formData.image_url}
+              alt="Ürün resmi"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.src = '/placeholder-image.png'
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, image_url: '' })}
+              className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+              title="Resmi kaldır"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="w-full px-4 py-8 border-2 border-dashed border-gray-300 rounded-xl hover:border-primary hover:bg-gray-50 transition-colors flex flex-col items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                  <span className="text-sm text-gray-600">Yükleniyor...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-8 h-8 text-gray-400" />
+                  <span className="text-sm font-medium text-gray-700">Bilgisayardan Resim Yükle</span>
+                  <span className="text-xs text-gray-500">JPG, PNG, WebP, GIF (Max 5MB)</span>
+                </>
+              )}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+          </div>
+        )}
+      </div>
 
       <label className="flex items-center gap-2 cursor-pointer">
         <input
@@ -86,14 +130,16 @@ function ProductForm({ formData, setFormData, categories, onSave, onCancel, isEd
       <div className="flex gap-3">
         <button
           onClick={onSave}
-          className="flex-1 bg-primary text-white px-4 py-3 rounded-xl font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
+          disabled={isUploading}
+          className="flex-1 bg-primary text-white px-4 py-3 rounded-xl font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Save className="w-5 h-5" />
           {isEdit ? 'Güncelle' : 'Kaydet'}
         </button>
         <button
           onClick={onCancel}
-          className="px-6 py-3 border border-gray-300 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+          disabled={isUploading}
+          className="px-6 py-3 border border-gray-300 rounded-xl font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           İptal
         </button>
@@ -111,6 +157,7 @@ export default function ProductsPage() {
   const [toast, setToast] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [isAdding, setIsAdding] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -240,6 +287,25 @@ export default function ProductsPage() {
     }
   }
 
+  const handleImageUpload = async (file) => {
+    setIsUploading(true)
+    try {
+      const { url, error } = await uploadImage(file)
+      
+      if (error) {
+        setToast({ message: error, type: 'error' })
+        return
+      }
+
+      setFormData({ ...formData, image_url: url })
+      setToast({ message: 'Resim yüklendi!', type: 'success' })
+    } catch (error) {
+      setToast({ message: 'Resim yüklenirken hata oluştu!', type: 'error' })
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
   const handleUpdate = async (id) => {
     try {
       const updatedProduct = {
@@ -361,6 +427,8 @@ export default function ProductsPage() {
                   is_available: true,
                 })
               }}
+              onImageUpload={handleImageUpload}
+              isUploading={isUploading}
             />
           </div>
         )}
@@ -380,6 +448,8 @@ export default function ProductsPage() {
                     categories={categories}
                     onSave={() => handleUpdate(product.id)}
                     onCancel={() => setEditingId(null)}
+                    onImageUpload={handleImageUpload}
+                    isUploading={isUploading}
                     isEdit
                   />
                 </div>
