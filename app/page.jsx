@@ -3,7 +3,7 @@ import { Store, UserCircle, Crown } from 'lucide-react'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-white to-primary/5 flex items-center justify-center p-4">
+    <div className="bg-gradient-to-br from-primary/10 via-white to-primary/5 flex items-center justify-center p-4 py-12">
       <div className="max-w-5xl w-full">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold text-gray-900 mb-4">
