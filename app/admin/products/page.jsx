@@ -235,14 +235,20 @@ export default function ProductsPage() {
 
       setCategories(categoriesData || [])
 
-      const { data: productsData, error } = await supabase
+      // Ürünleri getir - kategori olsun olmasın
+      let productsQuery = supabase
         .from('products')
         .select('*, category:categories(name)')
-        .in(
+
+      // Eğer kategori varsa filtrele
+      if (categoriesData && categoriesData.length > 0) {
+        productsQuery = productsQuery.in(
           'category_id',
-          categoriesData?.map((c) => c.id) || []
+          categoriesData.map((c) => c.id)
         )
-        .order('name')
+      }
+
+      const { data: productsData, error } = await productsQuery.order('name')
 
       if (error) throw error
       setProducts(productsData || [])
