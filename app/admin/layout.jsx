@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { playNotificationSound, showBrowserNotification } from '@/lib/notification'
 import Toast from '@/components/Toast'
+import Footer from '@/components/Footer'
 
 export default function AdminLayout({ children }) {
   const [toast, setToast] = useState(null)
@@ -59,15 +60,12 @@ export default function AdminLayout({ children }) {
   }, [])
 
   return (
-    <>
-      {children}
+    <div className="flex flex-col min-h-screen">
+      <main className="flex-1">{children}</main>
+      <Footer />
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
-    </>
+    </div>
   )
 }
