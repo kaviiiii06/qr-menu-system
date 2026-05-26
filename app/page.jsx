@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import { Store, UserCircle, Crown } from 'lucide-react'
+import Footer from '@/components/Footer'
 
 export default function Home() {
   return (
-    <div className="bg-gradient-to-br from-primary/10 via-white to-primary/5 p-4 py-16">
-      <div className="max-w-5xl w-full mx-auto">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary/10 via-white to-primary/5">
+      <div className="flex-1 flex items-center justify-center p-4 py-12">
+        <div className="max-w-5xl w-full mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold text-gray-900 mb-4">
             QR Menü Sistemi
@@ -89,6 +91,8 @@ export default function Home() {
           </p>
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   )
 }
